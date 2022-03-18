@@ -6,15 +6,14 @@ import (
 	"log"
 	"net"
 
+	"google.golang.org/grpc"
+
 	"git.neds.sh/matty/entain/racing/db"
 	"git.neds.sh/matty/entain/racing/proto/racing"
 	"git.neds.sh/matty/entain/racing/service"
-	"google.golang.org/grpc"
 )
 
-var (
-	grpcEndpoint = flag.String("grpc-endpoint", "localhost:9000", "gRPC server endpoint")
-)
+var grpcEndpoint = flag.String("grpc-endpoint", "localhost:9000", "gRPC server endpoint")
 
 func main() {
 	flag.Parse()
@@ -25,7 +24,7 @@ func main() {
 }
 
 func run() error {
-	conn, err := net.Listen("tcp", ":9000")
+	conn, err := net.Listen("tcp", "localhost:9000")
 	if err != nil {
 		return err
 	}

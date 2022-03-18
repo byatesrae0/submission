@@ -2,11 +2,12 @@ package db
 
 import (
 	"database/sql"
-	"github.com/golang/protobuf/ptypes"
-	_ "github.com/mattn/go-sqlite3"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
+	_ "github.com/mattn/go-sqlite3" // Imported for side effects
 
 	"git.neds.sh/matty/entain/racing/proto/racing"
 )
@@ -58,7 +59,7 @@ func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race,
 		return nil, err
 	}
 
-	return r.scanRaces(rows)
+	return scanRaces(rows)
 }
 
 func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFilter) (string, []interface{}) {
@@ -86,7 +87,7 @@ func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 	return query, args
 }
 
-func (m *racesRepo) scanRaces(
+func scanRaces(
 	rows *sql.Rows,
 ) ([]*racing.Race, error) {
 	var races []*racing.Race
