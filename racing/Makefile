@@ -10,3 +10,7 @@ help: ## Display this help text
 .PHONY: lint
 lint: ## Runs linting
 	./build/run.sh "./build/lint.sh"
+
+.PHONY: test
+test: ## Run all tests
+	./build/run.sh "./build/test.sh"

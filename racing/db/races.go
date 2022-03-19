@@ -13,26 +13,18 @@ import (
 )
 
 // RacesRepo provides repository access to races.
-type RacesRepo interface {
-	// Init will initialise our races repository.
-	Init() error
-
-	// List will return a list of races.
-	List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error)
-}
-
-type racesRepo struct {
+type RacesRepo struct {
 	db   *sql.DB
 	init sync.Once
 }
 
 // NewRacesRepo creates a new races repository.
-func NewRacesRepo(db *sql.DB) RacesRepo {
-	return &racesRepo{db: db}
+func NewRacesRepo(db *sql.DB) *RacesRepo {
+	return &RacesRepo{db: db}
 }
 
 // Init prepares the race repository dummy data.
-func (r *racesRepo) Init() error {
+func (r *RacesRepo) Init() error {
 	var err error
 
 	r.init.Do(func() {
@@ -43,7 +35,7 @@ func (r *racesRepo) Init() error {
 	return err
 }
 
-func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error) {
+func (r *RacesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error) {
 	var (
 		err   error
 		query string
@@ -62,7 +54,7 @@ func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race,
 	return scanRaces(rows)
 }
 
-func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFilter) (string, []interface{}) {
+func (r *RacesRepo) applyFilter(query string, filter *racing.ListRacesRequestFilter) (string, []interface{}) {
 	var (
 		clauses []string
 		args    []interface{}

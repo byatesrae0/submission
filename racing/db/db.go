@@ -6,7 +6,7 @@ import (
 	"syreclabs.com/go/faker"
 )
 
-func (r *racesRepo) seed() error {
+func (r *RacesRepo) seed() error {
 	statement, err := r.db.Prepare(`CREATE TABLE IF NOT EXISTS races (id INTEGER PRIMARY KEY, meeting_id INTEGER, name TEXT, number INTEGER, visible INTEGER, advertised_start_time DATETIME)`)
 	if err == nil {
 		_, err = statement.Exec()

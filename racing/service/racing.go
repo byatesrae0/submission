@@ -1,11 +1,16 @@
 package service
 
 import (
-	"git.neds.sh/matty/entain/racing/db"
 	"git.neds.sh/matty/entain/racing/proto/racing"
 
 	"golang.org/x/net/context"
 )
+
+// RacesRepo will be used as repository access to races.
+type RacesRepo interface {
+	// List should return a list of races.
+	List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error)
+}
 
 type Racing interface {
 	// ListRaces will return a collection of races.
@@ -14,11 +19,11 @@ type Racing interface {
 
 // racingService implements the Racing interface.
 type racingService struct {
-	racesRepo db.RacesRepo
+	racesRepo RacesRepo
 }
 
 // NewRacingService instantiates and returns a new racingService.
-func NewRacingService(racesRepo db.RacesRepo) Racing {
+func NewRacingService(racesRepo RacesRepo) Racing {
 	return &racingService{racesRepo}
 }
 
