@@ -1,0 +1,17 @@
+version: "3.5"
+services:
+  api:
+    container_name: api
+    image: api
+    build:
+      context: ./api/.
+    command: -grpc-endpoint racing:9000
+    ports:
+        - "${PORT:-8000}:${PORT:-8000}"
+  racing:
+    container_name: racing
+    image: racing
+    build:
+      context: ./racing/.
+    ports:
+        - "${PORT:-9000}:${PORT:-9000}"
