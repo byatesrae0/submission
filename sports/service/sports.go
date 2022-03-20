@@ -12,7 +12,7 @@ import (
 	"git.neds.sh/matty/entain/sports/proto/sports"
 )
 
-// SportsService can be used to look up sorting events.
+// SportsService can be used to query for sport events.
 type SportsService struct {
 	db *simpleDB
 }
