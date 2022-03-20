@@ -256,7 +256,7 @@ func RegisterRacingHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 var (
 	pattern_Racing_ListRaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "list-races"}, ""))
 
-	pattern_Racing_GetRace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "race", "id"}, ""))
+	pattern_Racing_GetRace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "races", "id"}, ""))
 )
 
 var (

@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type RacingClient interface {
 	// ListRaces returns a list of all races.
 	ListRaces(ctx context.Context, in *ListRacesRequest, opts ...grpc.CallOption) (*ListRacesResponse, error)
-	// GetRace returns a single races.
+	// GetRace returns a single race.
 	GetRace(ctx context.Context, in *GetRaceRequest, opts ...grpc.CallOption) (*Race, error)
 }
 
@@ -56,7 +56,7 @@ func (c *racingClient) GetRace(ctx context.Context, in *GetRaceRequest, opts ...
 type RacingServer interface {
 	// ListRaces returns a list of all races.
 	ListRaces(context.Context, *ListRacesRequest) (*ListRacesResponse, error)
-	// GetRace returns a single races.
+	// GetRace returns a single race.
 	GetRace(context.Context, *GetRaceRequest) (*Race, error)
 	mustEmbedUnimplementedRacingServer()
 }

@@ -22,7 +22,7 @@ type RacesRepo interface {
 	Get(id int64) (*racing.Race, error)
 }
 
-// RacingService implements the Racing interface.
+// RacingService can be used to query for races.
 type RacingService struct {
 	racesRepo RacesRepo
 }
