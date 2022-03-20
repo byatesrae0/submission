@@ -105,8 +105,70 @@ func TestRacingServiceListRaces(t *testing.T) {
 	}
 }
 
+func TestRacingServiceGetRace(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		with        *RacingService
+		giveContext context.Context
+		giveRequest *racing.GetRaceRequest
+		expect      *racing.Race
+		errAssert   func(*testing.T, error) bool
+	}{
+		{
+			name: "success_no_results",
+			with: NewRacingService(&mockRacesRepo{
+				get: func(_ int64) (*racing.Race, error) {
+					return &racing.Race{}, nil
+				},
+			}),
+			giveContext: context.Background(),
+			giveRequest: &racing.GetRaceRequest{},
+			expect:      &racing.Race{},
+		},
+		{
+			name: "repo_err_not_found",
+			with: NewRacingService(&mockRacesRepo{
+				get: func(_ int64) (*racing.Race, error) {
+					return nil, errors.Wrap(&mockCodeError{code: codes.NotFound, details: "Test error message."}, "wrapped")
+				},
+			}),
+			giveContext: context.Background(),
+			giveRequest: &racing.GetRaceRequest{},
+			errAssert: grpctest.NewGRPCErrorAsserter(
+				codes.NotFound,
+				"Test error message.",
+				nil,
+			),
+		},
+	} {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(tc.giveContext, time.Second*2)
+			t.Cleanup(cancel)
+
+			actual, actualErr := tc.with.GetRace(ctx, tc.giveRequest)
+
+			if tc.expect != nil {
+				assert.Empty(t, cmp.Diff(tc.expect, actual, cmp.Options{protocmp.Transform(), protocmp.IgnoreUnknown()}), "expected vs actual")
+			} else {
+				assert.Nil(t, actual, "actual")
+			}
+
+			if tc.errAssert != nil {
+				tc.errAssert(t, actualErr)
+			} else {
+				assert.NoError(t, actualErr, "actualErr")
+			}
+		})
+	}
+}
+
 type mockRacesRepo struct {
-	list func(filter *racing.ListRacesRequest) ([]*racing.Race, error)
+	list func(*racing.ListRacesRequest) ([]*racing.Race, error)
+	get  func(int64) (*racing.Race, error)
 }
 
 func (r *mockRacesRepo) List(req *racing.ListRacesRequest) ([]*racing.Race, error) {
@@ -115,6 +177,14 @@ func (r *mockRacesRepo) List(req *racing.ListRacesRequest) ([]*racing.Race, erro
 	}
 
 	panic("mockRacesRepo: unexpected call to List().")
+}
+
+func (r *mockRacesRepo) Get(id int64) (*racing.Race, error) {
+	if r.get != nil {
+		return r.get(id)
+	}
+
+	panic("mockRacesRepo: unexpected call to Get().")
 }
 
 type mockCodeError struct {

@@ -49,7 +49,7 @@ func (r *RacesRepo) List(req *racing.ListRacesRequest) ([]*racing.Race, error) {
 		return nil, errors.Wrap(err, "order by")
 	}
 
-	log.Printf("[DBG] Races query(%v): %s", args, query)
+	log.Printf("[DBG] Races List query(%v): %s", args, query)
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -57,6 +57,33 @@ func (r *RacesRepo) List(req *racing.ListRacesRequest) ([]*racing.Race, error) {
 	}
 
 	return scanRaces(rows)
+}
+
+// Get will return a race.
+func (r *RacesRepo) Get(id int64) (*racing.Race, error) {
+	query := getRaceQueries()[raceGet]
+
+	log.Printf("[DBG] Races Get query(%v): %s", id, query)
+
+	rows, err := r.db.Query(fmt.Sprintf("%s WHERE id = ?", query), id)
+	if err != nil {
+		return nil, err
+	}
+
+	races, err := scanRaces(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(races) == 0 {
+		return nil, &notFoundError{msg: fmt.Sprintf("Race with ID %v does not exist.", id)}
+	}
+
+	if len(races) > 1 {
+		log.Printf("[ERR] More than one race returned for ID %v, returning the first.", id)
+	}
+
+	return races[0], nil
 }
 
 func (r *RacesRepo) applyFilter(query string, filter *racing.ListRacesRequestFilter) (string, []interface{}) {

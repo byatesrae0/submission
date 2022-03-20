@@ -17,6 +17,9 @@ import (
 type RacesRepo interface {
 	// List should return a list of races.
 	List(req *racing.ListRacesRequest) ([]*racing.Race, error)
+
+	// Get should return a races.
+	Get(id int64) (*racing.Race, error)
 }
 
 // RacingService implements the Racing interface.
@@ -46,6 +49,25 @@ func (s *RacingService) ListRaces(ctx context.Context, in *racing.ListRacesReque
 	}
 
 	return &racing.ListRacesResponse{Races: races}, nil
+}
+
+func (s *RacingService) GetRace(ctx context.Context, in *racing.GetRaceRequest) (*racing.Race, error) {
+	race, err := s.racesRepo.Get(in.Id)
+	if err != nil {
+		// Does this error hint at a grpc code?
+		if codeErr := (interface {
+			Code() codes.Code
+			Error() string
+		})(nil); errors.As(err, &codeErr) {
+			log.Printf("[ERR] GetRaces: %v", err)
+
+			return nil, codeErrorToStatusError(codeErr.Code(), codeErr)
+		}
+
+		return nil, err
+	}
+
+	return race, nil
 }
 
 // codeErrorToStatusError creates a grpc status error from an existing error.

@@ -2,10 +2,11 @@ package db
 
 const (
 	racesList = "list"
+	raceGet   = "get"
 )
 
 func getRaceQueries() map[string]string {
-	return map[string]string{
+	m := map[string]string{
 		racesList: `
 			SELECT 
 				id, 
@@ -19,4 +20,8 @@ func getRaceQueries() map[string]string {
 			FROM races
 		`,
 	}
+
+	m[raceGet] = m[racesList]
+
+	return m
 }

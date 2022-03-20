@@ -33,3 +33,20 @@ func (e *invalidArgumentError) Details() string {
 func (e *invalidArgumentError) Error() string {
 	return fmt.Sprintf("invalid argument \"%s\", %s", e.field, e.details)
 }
+
+var _ error = (*notFoundError)(nil)
+
+// notFoundError indicates that the requested entity was not found.
+type notFoundError struct {
+	msg string
+}
+
+// Code hints at the gRPC code that would be representative for this error.
+func (e *notFoundError) Code() codes.Code {
+	return codes.NotFound
+}
+
+// Error satisfies the error interface.
+func (e *notFoundError) Error() string {
+	return e.msg
+}

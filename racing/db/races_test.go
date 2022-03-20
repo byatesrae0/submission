@@ -19,7 +19,7 @@ import (
 func TestRacesRepoList(t *testing.T) {
 	t.Parallel()
 
-	listColumns := []string{
+	columns := []string{
 		"id",
 		"meeting_id",
 		"name",
@@ -43,7 +43,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 1),
+						mock.NewRows(columns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 1),
 					)
 
 				return NewRacesRepo(db)
@@ -68,7 +68,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 2),
+						mock.NewRows(columns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 2),
 					)
 
 				return NewRacesRepo(db)
@@ -91,7 +91,7 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery("SELECT").WillReturnRows(mock.NewRows(listColumns))
+				mock.ExpectQuery("SELECT").WillReturnRows(mock.NewRows(columns))
 
 				return NewRacesRepo(db)
 			}(),
@@ -104,7 +104,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns).
+						mock.NewRows(columns).
 							AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 1).
 							AddRow(5, 6, "7", 8, false, time.Date(2001, time.February, 2, 0, 0, 0, 0, time.UTC), 2),
 					)
@@ -145,7 +145,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns),
+						mock.NewRows(columns),
 					)
 
 				return NewRacesRepo(db)
@@ -159,7 +159,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns),
+						mock.NewRows(columns),
 					)
 
 				return NewRacesRepo(db)
@@ -225,6 +225,97 @@ func TestRacesRepoList(t *testing.T) {
 			t.Parallel()
 
 			actual, actualErr := tc.with.List(tc.give)
+
+			if tc.expect != nil {
+				assert.Empty(t, cmp.Diff(tc.expect, actual, cmp.Options{protocmp.Transform(), protocmp.IgnoreUnknown()}), "expected vs actual")
+			} else {
+				assert.Nil(t, actual, "actual")
+			}
+
+			if tc.expectError != "" {
+				assert.EqualError(t, actualErr, tc.expectError, "actualErr")
+			} else {
+				assert.NoError(t, actualErr, "actualErr")
+			}
+		})
+	}
+}
+
+func TestRacesRepoGet(t *testing.T) {
+	t.Parallel()
+
+	columns := []string{
+		"id",
+		"meeting_id",
+		"name",
+		"number",
+		"visible",
+		"advertised_start_time",
+		"status",
+	}
+
+	for _, tc := range []struct {
+		name        string
+		with        *RacesRepo
+		give        int64
+		expect      *racing.Race
+		expectError string
+	}{
+		{
+			name: "success",
+			with: func() *RacesRepo {
+				db, mock := newSQLMock(t)
+
+				mock.ExpectQuery("SELECT").
+					WillReturnRows(
+						mock.NewRows(columns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 1),
+					)
+
+				return NewRacesRepo(db)
+			}(),
+			expect: &racing.Race{
+				Id:                  1,
+				MeetingId:           2,
+				Name:                "3",
+				Number:              4,
+				Visible:             true,
+				AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				Status:              racing.Race_OPEN,
+			},
+		},
+		{
+			name: "db_err",
+			with: func() *RacesRepo {
+				db, mock := newSQLMock(t)
+
+				mock.ExpectQuery("SELECT").WillReturnError(errors.New("TestError123"))
+
+				return NewRacesRepo(db)
+			}(),
+			expectError: "TestError123",
+		},
+		{
+			name: "not_found",
+			with: func() *RacesRepo {
+				db, mock := newSQLMock(t)
+
+				mock.ExpectQuery("SELECT").
+					WillReturnRows(
+						mock.NewRows(columns),
+					)
+
+				return NewRacesRepo(db)
+			}(),
+			give:        123,
+			expectError: "Race with ID 123 does not exist.",
+		},
+	} {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual, actualErr := tc.with.Get(tc.give)
 
 			if tc.expect != nil {
 				assert.Empty(t, cmp.Diff(tc.expect, actual, cmp.Options{protocmp.Transform(), protocmp.IgnoreUnknown()}), "expected vs actual")
