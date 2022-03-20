@@ -115,7 +115,7 @@ func TestRacingServiceGetRace(t *testing.T) {
 		errAssert   func(*testing.T, error) bool
 	}{
 		{
-			name: "success_no_results",
+			name: "success",
 			with: NewRacingService(&mockRacesRepo{
 				get: func(_ int64) (*racing.Race, error) {
 					return &racing.Race{}, nil
