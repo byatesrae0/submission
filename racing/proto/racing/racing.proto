@@ -14,6 +14,13 @@ service Racing {
 
 message ListRacesRequest {
   ListRacesRequestFilter filter = 1;
+
+  // Order by any single field in Race.
+  // Expected to be in the format "field [ASC|DESC]"
+  // Examples:
+  //  advertised_start_time DESC
+  //  meeting_id
+  string order_by = 2;
 }
 
 // Response to ListRaces call.

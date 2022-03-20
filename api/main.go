@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	_ "google.golang.org/genproto/googleapis/rpc/errdetails" // Needs to be imported as types from this package are expected from the racing service and marshalled to in the grpc-gateway.
 	"google.golang.org/grpc"
 
 	"git.neds.sh/matty/entain/api/proto/racing"

@@ -17,7 +17,14 @@ service Racing {
 
 // Request for ListRaces call.
 message ListRacesRequest {
-  ListRacesRequestFilter filter = 1;
+  ListRacesRequestFilter filter = 1;  
+
+  // Order by any single field in Race.
+  // Expected to be in the format "field [ASC|DESC]"
+  // Examples:
+  //  advertised_start_time DESC
+  //  meeting_id
+  string order_by = 2;
 }
 
 // Response to ListRaces call.
@@ -27,8 +34,9 @@ message ListRacesResponse {
 
 // Filter for listing races.
 message ListRacesRequestFilter {
-  repeated int64 meeting_ids = 1;
-  
+  repeated int64 meeting_ids = 1;  
+
+  // When true only races that are visible are returned.
   bool visible_only = 2;
 }
 

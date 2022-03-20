@@ -6,6 +6,9 @@ services:
     build:
       context: ./api/.
     command: -grpc-endpoint racing:9000
+    environment:
+      - GRPC_GO_LOG_VERBOSITY_LEVEL=99
+      - GRPC_GO_LOG_SEVERITY_LEVEL=info
     ports:
         - "${PORT:-8000}:${PORT:-8000}"
   racing:
@@ -13,5 +16,8 @@ services:
     image: racing
     build:
       context: ./racing/.
+    environment:
+      - GRPC_GO_LOG_VERBOSITY_LEVEL=99
+      - GRPC_GO_LOG_SEVERITY_LEVEL=info
     ports:
         - "${PORT:-9000}:${PORT:-9000}"

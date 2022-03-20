@@ -2,12 +2,15 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	_ "github.com/mattn/go-sqlite3" // Imported for side effects
+	"github.com/pkg/errors"
 
 	"git.neds.sh/matty/entain/racing/proto/racing"
 )
@@ -35,16 +38,18 @@ func (r *RacesRepo) Init() error {
 	return err
 }
 
-func (r *RacesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error) {
-	var (
-		err   error
-		query string
-		args  []interface{}
-	)
+// List will return a collection of races.
+func (r *RacesRepo) List(req *racing.ListRacesRequest) ([]*racing.Race, error) {
+	query := getRaceQueries()[racesList]
 
-	query = getRaceQueries()[racesList]
+	query, args := r.applyFilter(query, req.Filter)
 
-	query, args = r.applyFilter(query, filter)
+	query, err := r.applyOrderBy(query, req.OrderBy)
+	if err != nil {
+		return nil, errors.Wrap(err, "order by")
+	}
+
+	log.Printf("[DBG] Races query(%v): %s", args, query)
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -81,6 +86,67 @@ func (r *RacesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 	}
 
 	return query, args
+}
+
+// applyOrderBy applies an ordering by single field.
+// orderBy is expected to be in the format "field [ASC|DESC]", e.g "advertised_start_time DESC" or "meeting_id"
+func (r *RacesRepo) applyOrderBy(query string, orderBy string) (string, error) {
+	var (
+		field     string
+		direction string
+		fieldName = "orderBy"
+	)
+
+	if orderBy == "" {
+		return query, nil
+	}
+
+	fieldAndOrderSplit := strings.Split(orderBy, " ")
+
+	if len(fieldAndOrderSplit) == 2 {
+		field = fieldAndOrderSplit[0]
+		direction = fieldAndOrderSplit[1]
+	} else if len(fieldAndOrderSplit) == 1 {
+		field = fieldAndOrderSplit[0]
+	} else {
+		return "", &invalidArgumentError{field: fieldName, details: "orderBy is invalid, must be in the format \"field [ASC|DESC]\"."}
+	}
+
+	if field == "" {
+		return "", &invalidArgumentError{field: fieldName, details: "orderBy field is required."}
+	}
+
+	switch strings.ToLower(field) {
+	case "id":
+		field = "id"
+	case "meeting_id":
+		field = "meeting_id"
+	case "name":
+		field = "name"
+	case "number":
+		field = "number"
+	case "visible":
+		field = "visible"
+	case "advertised_start_time":
+		field = "advertised_start_time"
+	default:
+		return "", &invalidArgumentError{field: fieldName, details: "orderBy field is invalid, must be either \"id\", \"meeting_id\", \"name\", \"number\", \"visible\" or \"advertised_start_time\"."}
+	}
+
+	query = fmt.Sprintf(" %s ORDER BY %s", query, field)
+
+	if direction != "" {
+		switch strings.ToUpper(direction) {
+		case "ASC":
+			query = fmt.Sprintf(" %s ASC", query)
+		case "DESC":
+			query = fmt.Sprintf(" %s DESC", query)
+		default:
+			return "", &invalidArgumentError{field: fieldName, details: "orderBy direction invalid, must be either \"ASC\" or \"DESC\"."}
+		}
+	}
+
+	return query, nil
 }
 
 func scanRaces(
