@@ -26,6 +26,7 @@ func TestRacesRepoList(t *testing.T) {
 		"number",
 		"visible",
 		"advertised_start_time",
+		"status",
 	}
 
 	for _, tc := range []struct {
@@ -40,9 +41,9 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).
+				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+						mock.NewRows(listColumns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 1),
 					)
 
 				return NewRacesRepo(db)
@@ -56,6 +57,7 @@ func TestRacesRepoList(t *testing.T) {
 					Number:              4,
 					Visible:             true,
 					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+					Status:              racing.Race_OPEN,
 				},
 			},
 		},
@@ -64,9 +66,9 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).
+				mock.ExpectQuery("SELECT").
 					WillReturnRows(
-						mock.NewRows(listColumns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+						mock.NewRows(listColumns).AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 2),
 					)
 
 				return NewRacesRepo(db)
@@ -80,6 +82,7 @@ func TestRacesRepoList(t *testing.T) {
 					Number:              4,
 					Visible:             true,
 					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+					Status:              racing.Race_CLOSED,
 				},
 			},
 		},
@@ -88,7 +91,7 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).WillReturnRows(mock.NewRows(listColumns))
+				mock.ExpectQuery("SELECT").WillReturnRows(mock.NewRows(listColumns))
 
 				return NewRacesRepo(db)
 			}(),
@@ -99,11 +102,11 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).
+				mock.ExpectQuery("SELECT").
 					WillReturnRows(
 						mock.NewRows(listColumns).
-							AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)).
-							AddRow(5, 6, "7", 8, false, time.Date(2001, time.February, 2, 0, 0, 0, 0, time.UTC)),
+							AddRow(1, 2, "3", 4, true, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC), 1).
+							AddRow(5, 6, "7", 8, false, time.Date(2001, time.February, 2, 0, 0, 0, 0, time.UTC), 2),
 					)
 
 				return NewRacesRepo(db)
@@ -122,6 +125,7 @@ func TestRacesRepoList(t *testing.T) {
 					Number:              4,
 					Visible:             true,
 					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+					Status:              racing.Race_OPEN,
 				},
 				{
 					Id:                  5,
@@ -130,6 +134,7 @@ func TestRacesRepoList(t *testing.T) {
 					Number:              8,
 					Visible:             false,
 					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2001, time.February, 2, 0, 0, 0, 0, time.UTC)),
+					Status:              racing.Race_CLOSED,
 				},
 			},
 		},
@@ -138,7 +143,7 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).
+				mock.ExpectQuery("SELECT").
 					WillReturnRows(
 						mock.NewRows(listColumns),
 					)
@@ -152,7 +157,7 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).
+				mock.ExpectQuery("SELECT").
 					WillReturnRows(
 						mock.NewRows(listColumns),
 					)
@@ -166,7 +171,7 @@ func TestRacesRepoList(t *testing.T) {
 			with: func() *RacesRepo {
 				db, mock := newSQLMock(t)
 
-				mock.ExpectQuery(getRaceQueries()[racesList]).WillReturnError(errors.New("TestError123"))
+				mock.ExpectQuery("SELECT").WillReturnError(errors.New("TestError123"))
 
 				return NewRacesRepo(db)
 			}(),
