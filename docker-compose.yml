@@ -5,7 +5,7 @@ services:
     image: api
     build:
       context: ./api/.
-    command: -grpc-endpoint racing:9000
+    command: -racing-endpoint racing:9000 -sports-endpoint sports:7000
     environment:
       - GRPC_GO_LOG_VERBOSITY_LEVEL=99
       - GRPC_GO_LOG_SEVERITY_LEVEL=info
@@ -21,3 +21,13 @@ services:
       - GRPC_GO_LOG_SEVERITY_LEVEL=info
     ports:
         - "${PORT:-9000}:${PORT:-9000}"
+  sports:
+    container_name: sports
+    image: sports
+    build:
+      context: ./sports/.
+    environment:
+      - GRPC_GO_LOG_VERBOSITY_LEVEL=99
+      - GRPC_GO_LOG_SEVERITY_LEVEL=info
+    ports:
+        - "${PORT:-7000}:${PORT:-7000}"
