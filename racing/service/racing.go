@@ -19,7 +19,7 @@ type RacesRepo interface {
 	List(req *racing.ListRacesRequest) ([]*racing.Race, error)
 }
 
-// RacingService implements the Racing interface.
+// RacingService can be used to query for races.
 type RacingService struct {
 	racesRepo RacesRepo
 }
