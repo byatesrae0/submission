@@ -7,13 +7,12 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"git.neds.sh/matty/entain/racing/grpctest"
 	"git.neds.sh/matty/entain/racing/proto/racing"
 )
 
@@ -32,7 +31,7 @@ func TestRacesRepoList(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		with        *RacesRepo
-		give        *racing.ListRacesRequestFilter
+		give        *racing.ListRacesRequest
 		expect      []*racing.Race
 		expectError string
 	}{
@@ -48,7 +47,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				return NewRacesRepo(db)
 			}(),
-			give: &racing.ListRacesRequestFilter{},
+			give: &racing.ListRacesRequest{Filter: &racing.ListRacesRequestFilter{}},
 			expect: []*racing.Race{
 				{
 					Id:                  1,
@@ -56,7 +55,7 @@ func TestRacesRepoList(t *testing.T) {
 					Name:                "3",
 					Number:              4,
 					Visible:             true,
-					AdvertisedStartTime: timeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
 				},
 			},
 		},
@@ -72,7 +71,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				return NewRacesRepo(db)
 			}(),
-			give: nil,
+			give: &racing.ListRacesRequest{},
 			expect: []*racing.Race{
 				{
 					Id:                  1,
@@ -80,7 +79,7 @@ func TestRacesRepoList(t *testing.T) {
 					Name:                "3",
 					Number:              4,
 					Visible:             true,
-					AdvertisedStartTime: timeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
 				},
 			},
 		},
@@ -93,7 +92,7 @@ func TestRacesRepoList(t *testing.T) {
 
 				return NewRacesRepo(db)
 			}(),
-			give: &racing.ListRacesRequestFilter{},
+			give: &racing.ListRacesRequest{},
 		},
 		{
 			name: "success_multiple_results",
@@ -109,9 +108,11 @@ func TestRacesRepoList(t *testing.T) {
 
 				return NewRacesRepo(db)
 			}(),
-			give: &racing.ListRacesRequestFilter{
-				MeetingIds:   []int64{1},
-				VisibileOnly: true,
+			give: &racing.ListRacesRequest{
+				Filter: &racing.ListRacesRequestFilter{
+					MeetingIds:   []int64{1},
+					VisibileOnly: true,
+				},
 			},
 			expect: []*racing.Race{
 				{
@@ -120,7 +121,7 @@ func TestRacesRepoList(t *testing.T) {
 					Name:                "3",
 					Number:              4,
 					Visible:             true,
-					AdvertisedStartTime: timeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
+					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)),
 				},
 				{
 					Id:                  5,
@@ -128,9 +129,37 @@ func TestRacesRepoList(t *testing.T) {
 					Name:                "7",
 					Number:              8,
 					Visible:             false,
-					AdvertisedStartTime: timeToTimestampPB(t, time.Date(2001, time.February, 2, 0, 0, 0, 0, time.UTC)),
+					AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Date(2001, time.February, 2, 0, 0, 0, 0, time.UTC)),
 				},
 			},
+		},
+		{
+			name: "success_ordering",
+			with: func() *RacesRepo {
+				db, mock := newSQLMock(t)
+
+				mock.ExpectQuery(getRaceQueries()[racesList]).
+					WillReturnRows(
+						mock.NewRows(listColumns),
+					)
+
+				return NewRacesRepo(db)
+			}(),
+			give: &racing.ListRacesRequest{OrderBy: "id ASC"},
+		},
+		{
+			name: "success_ordering_no_direction",
+			with: func() *RacesRepo {
+				db, mock := newSQLMock(t)
+
+				mock.ExpectQuery(getRaceQueries()[racesList]).
+					WillReturnRows(
+						mock.NewRows(listColumns),
+					)
+
+				return NewRacesRepo(db)
+			}(),
+			give: &racing.ListRacesRequest{OrderBy: "meeting_id"},
 		},
 		{
 			name: "db_err",
@@ -141,8 +170,48 @@ func TestRacesRepoList(t *testing.T) {
 
 				return NewRacesRepo(db)
 			}(),
-			give:        &racing.ListRacesRequestFilter{},
+			give:        &racing.ListRacesRequest{},
 			expectError: "TestError123",
+		},
+		{
+			name: "invalid_orderby_field",
+			with: func() *RacesRepo {
+				db, _ := newSQLMock(t)
+
+				return NewRacesRepo(db)
+			}(),
+			give:        &racing.ListRacesRequest{OrderBy: "meeting_iid"},
+			expectError: "order by: invalid argument \"orderBy\", orderBy field is invalid, must be either \"id\", \"meeting_id\", \"name\", \"number\", \"visible\" or \"advertised_start_time\".",
+		},
+		{
+			name: "invalid_orderby_no_field",
+			with: func() *RacesRepo {
+				db, _ := newSQLMock(t)
+
+				return NewRacesRepo(db)
+			}(),
+			give:        &racing.ListRacesRequest{OrderBy: " DESC"},
+			expectError: "order by: invalid argument \"orderBy\", orderBy field is required.",
+		},
+		{
+			name: "invalid_orderby_format",
+			with: func() *RacesRepo {
+				db, _ := newSQLMock(t)
+
+				return NewRacesRepo(db)
+			}(),
+			give:        &racing.ListRacesRequest{OrderBy: "A B C"},
+			expectError: "order by: invalid argument \"orderBy\", orderBy is invalid, must be in the format \"field [ASC|DESC]\".",
+		},
+		{
+			name: "invalid_orderby_direction",
+			with: func() *RacesRepo {
+				db, _ := newSQLMock(t)
+
+				return NewRacesRepo(db)
+			}(),
+			give:        &racing.ListRacesRequest{OrderBy: "advertised_start_time DESsC"},
+			expectError: "order by: invalid argument \"orderBy\", orderBy direction invalid, must be either \"ASC\" or \"DESC\".",
 		},
 	} {
 		tc := tc
@@ -167,14 +236,9 @@ func TestRacesRepoList(t *testing.T) {
 	}
 }
 
-func timeToTimestampPB(t *testing.T, tt time.Time) *timestamppb.Timestamp {
-	ts, err := ptypes.TimestampProto(tt)
-	require.NoError(t, err, "TimeToTimestampProto")
-
-	return ts
-}
-
 func newSQLMock(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
+	t.Helper()
+
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err, "sqlmock.New()")
 
