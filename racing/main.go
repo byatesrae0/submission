@@ -13,7 +13,7 @@ import (
 	"git.neds.sh/matty/entain/racing/service"
 )
 
-var grpcEndpoint = flag.String("grpc-endpoint", "localhost:9000", "gRPC server endpoint")
+var grpcEndpoint = flag.String("grpc-endpoint", "0.0.0.0:9000", "gRPC server endpoint")
 
 func main() {
 	flag.Parse()
@@ -24,7 +24,7 @@ func main() {
 }
 
 func run() error {
-	conn, err := net.Listen("tcp", "localhost:9000")
+	conn, err := net.Listen("tcp", *grpcEndpoint)
 	if err != nil {
 		return err
 	}

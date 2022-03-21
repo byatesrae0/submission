@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
     exit 1; 
 fi
 
-docker build -t entain_submission_build ./build/
+docker build -t racing_build ./build/
 
 docker run \
     --rm \
@@ -15,7 +15,7 @@ docker run \
     --workdir="/src" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --entrypoint /bin/bash \
-    entain_submission_build \
+    racing_build \
     $1
 
 HOST_UID=$(id -u)

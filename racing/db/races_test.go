@@ -110,7 +110,8 @@ func TestRacesRepoList(t *testing.T) {
 				return NewRacesRepo(db)
 			}(),
 			give: &racing.ListRacesRequestFilter{
-				MeetingIds: []int64{1},
+				MeetingIds:   []int64{1},
+				VisibileOnly: true,
 			},
 			expect: []*racing.Race{
 				{
