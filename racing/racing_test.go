@@ -41,9 +41,9 @@ func TestRacingListRaces(t *testing.T) {
 			// WARNING: This test relies on data seeded in the db package.
 			expect: &racing.ListRacesResponse{
 				Races: []*racing.Race{
-					{Id: 69, MeetingId: 9, Name: "Michigan buffalo", Number: 10, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614558171, 0))},
-					{Id: 37, MeetingId: 9, Name: "Mississippi ducks", Number: 8, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614720480, 0))},
-					{Id: 6, MeetingId: 9, Name: "Nebraska giants", Number: 4, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614534492, 0))},
+					{Id: 69, MeetingId: 9, Name: "Michigan buffalo", Number: 10, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614558171, 0)), Status: racing.Race_RACE_STATUS_CLOSED},
+					{Id: 37, MeetingId: 9, Name: "Mississippi ducks", Number: 8, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614720480, 0)), Status: racing.Race_RACE_STATUS_CLOSED},
+					{Id: 6, MeetingId: 9, Name: "Nebraska giants", Number: 4, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614534492, 0)), Status: racing.Race_RACE_STATUS_CLOSED},
 				},
 			},
 		},
