@@ -62,10 +62,10 @@ message Race {
   // Represents the Race status.
   enum Status {
     // This is not a valid status.
-    UNKNOWN = 0;
+    RACE_STATUS_UNKNOWN = 0;
     
-    OPEN = 1;
+    RACE_STATUS_OPEN = 1;
 
-    CLOSED = 2;
+    RACE_STATUS_CLOSED = 2;
   }
 }
