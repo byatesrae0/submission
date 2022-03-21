@@ -95,3 +95,59 @@ func TestRacingListRaces(t *testing.T) {
 		})
 	}
 }
+
+func TestRacingGetRace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name        string
+		giveContext context.Context
+		giveRequest *racing.GetRaceRequest
+		expect      *racing.Race
+		errAssert   func(*testing.T, error) bool
+	}{
+		{
+			name:        "success",
+			giveContext: context.Background(),
+			giveRequest: &racing.GetRaceRequest{Id: 6},
+			// WARNING: This test relies on data seeded in the db package.
+			expect: &racing.Race{Id: 6, MeetingId: 9, Name: "Nebraska giants", Number: 4, Visible: true, AdvertisedStartTime: grpctest.TimeToTimestampPB(t, time.Unix(1614534492, 0)), Status: racing.Race_RACE_STATUS_CLOSED},
+		},
+		{
+			name:        "not_found",
+			giveContext: context.Background(),
+			giveRequest: &racing.GetRaceRequest{Id: 12345},
+			errAssert: grpctest.NewGRPCErrorAsserter(
+				codes.NotFound,
+				"Race with ID 12345 does not exist.",
+				nil,
+			),
+		},
+	} {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(tc.giveContext, time.Second*3)
+			t.Cleanup(cancel)
+
+			actual, actualErr := racingCli.GetRace(ctx, tc.giveRequest)
+
+			if tc.expect != nil {
+				assert.Empty(t, cmp.Diff(tc.expect, actual, cmp.Options{protocmp.Transform(), protocmp.IgnoreUnknown()}), "expected vs actual")
+			} else {
+				assert.Nil(t, actual, "actual")
+			}
+
+			if tc.errAssert != nil {
+				tc.errAssert(t, actualErr)
+			} else {
+				assert.NoError(t, actualErr, "actualErr")
+			}
+		})
+	}
+}
